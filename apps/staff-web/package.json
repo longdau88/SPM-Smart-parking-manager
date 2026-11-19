@@ -1,0 +1,31 @@
+{
+  "name": "@spm/staff-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SPM Staff Cabin Workstation (React 18 + Ergonomic Dark Mode + WebRTC)",
+  "scripts": {
+    "dev": "vite --port 3001",
+    "build": "tsc && vite build",
+    "preview": "vite preview --port 3001"
+  },
+  "dependencies": {
+    "@spm/design-tokens": "workspace:*",
+    "@spm/shared-types": "workspace:*",
+    "@spm/validation": "workspace:*",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.456.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

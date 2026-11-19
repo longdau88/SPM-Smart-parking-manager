@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL 16 with PostGIS
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: spm-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: spm_admin
+      POSTGRES_PASSWORD: REDACTED_DB_PASSWORD
+      POSTGRES_DB: spm_enterprise
+    ports:
+      - "5432:5432"
+    volumes:
+      - spm_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spm_admin -d spm_enterprise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 7 (Cache & WebSocket Adapter)
+  redis:
+    image: redis:7-alpine
+    container_name: spm-redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass REDACTED_REDIS_PASSWORD
+    ports:
+      - "6379:6379"
+    volumes:
+      - spm_redis_data:/data
+
+  # 3. RabbitMQ (AMQP Event Broker with Management UI)
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: spm-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: spm_mq
+      RABBITMQ_DEFAULT_PASS: REDACTED_RABBITMQ_PASSWORD
+    ports:
+      - "5672:5672"   # AMQP Protocol
+      - "15672:15672" # Management Web UI
+    volumes:
+      - spm_rabbitmq_data:/var/lib/rabbitmq
+
+  # 4. Eclipse Mosquitto (MQTT 5.0 Broker for Edge & IoT)
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: spm-mqtt
+    restart: always
+    ports:
+      - "1883:1883" # MQTT Port
+      - "9001:9001" # MQTT over WebSocket
+    volumes:
+      - spm_mosquitto_data:/mosquitto/data
+
+  # 5. MinIO (S3-compatible Object Storage for Plate Images)
+  minio:
+    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    container_name: spm-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: spm_minio_admin
+      MINIO_ROOT_PASSWORD: REDACTED_MINIO_PASSWORD
+    ports:
+      - "9000:9000" # S3 API
+      - "9090:9001" # MinIO Console Web UI
+    volumes:
+      - spm_minio_data:/data
+
+volumes:
+  spm_postgres_data:
+  spm_redis_data:
+  spm_rabbitmq_data:
+  spm_mosquitto_data:
+  spm_minio_data:

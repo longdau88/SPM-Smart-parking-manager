@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Turborepo
+.turbo/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Flutter / Android / iOS
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.apk
+*.aab
+build/
+ios/Pods/
+ios/.symlinks/
+android/.gradle/
+android/app/build/
+
+# Python / AI
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.onnx
+*.engine
+weights/*.pt
