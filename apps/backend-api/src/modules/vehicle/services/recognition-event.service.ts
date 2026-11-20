@@ -26,6 +26,17 @@ export class RecognitionEventService {
 
   async create(dto: CreateRecognitionEventDto, tenantId: string) {
     if (!tenantId) throw new BadRequestException('Thiếu tenant context cho sự kiện nhận diện');
+    if (dto.edge_event_id) {
+      const existing = await this.eventRepository.findOne({ where: { edge_event_id: dto.edge_event_id, tenant_id: tenantId } });
+      if (existing) {
+        const vehicle = await this.vehicleRepository.findOne({ where: { tenant_id: tenantId, clean_plate: existing.recognized_clean_plate } });
+        return {
+          event: existing,
+          matched_vehicle: vehicle ?? null,
+          action: vehicle?.vehicle_status === 'BLOCKED' ? 'MANUAL_REVIEW' : 'CONTINUE',
+        };
+      }
+    }
     const site = await this.siteRepository.findOne({
       where: { id: dto.site_id, tenant_id: tenantId },
     });
@@ -37,6 +48,7 @@ export class RecognitionEventService {
 
     const cleanPlate = normalizePlate(dto.corrected_plate ?? dto.clean_plate);
     const event = this.eventRepository.create({
+      edge_event_id: dto.edge_event_id ?? null,
       tenant_id: tenantId,
       site_id: dto.site_id,
       lane_id: dto.lane_id,

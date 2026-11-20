@@ -17,6 +17,8 @@ import { PricingRuleEntity } from '../modules/billing/entities/pricing-rule.enti
 import { InvoiceEntity } from '../modules/billing/entities/invoice.entity';
 import { PaymentTransactionEntity } from '../modules/billing/entities/payment-transaction.entity';
 import { AuditLogEntity } from '../modules/operations/entities/audit-log.entity';
+import { EdgeEventReceiptEntity } from '../modules/operations/entities/edge-event-receipt.entity';
+import { EdgeDeviceHeartbeatEntity } from '../modules/operations/entities/edge-device-heartbeat.entity';
 
 export default new DataSource({
   type: 'postgres',
@@ -44,6 +46,8 @@ export default new DataSource({
     InvoiceEntity,
     PaymentTransactionEntity,
     AuditLogEntity,
+    EdgeEventReceiptEntity,
+    EdgeDeviceHeartbeatEntity,
   ],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
   migrationsTableName: 'spm_migrations',

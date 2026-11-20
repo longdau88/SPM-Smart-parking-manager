@@ -10,6 +10,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/google/uuid"
 	"github.com/longdau88/SPM-Smart-parking-manager/services/edge-agent/internal/agent"
 	"github.com/longdau88/SPM-Smart-parking-manager/services/edge-agent/internal/modbus"
 	"github.com/longdau88/SPM-Smart-parking-manager/services/edge-agent/internal/mqttsync"
@@ -103,11 +104,18 @@ func main() {
 		case <-ticker.C:
 			loop1, loop2, err := controller.LoopStates()
 			if err == nil {
-				if err := engine.EnqueueLoopEvent(ctx, time.Now().UTC().Format("20060102T150405.000000000Z"), loop1, loop2); err != nil {
+				if err := engine.EnqueueLoopEvent(ctx, uuid.NewString(), loop1, loop2); err != nil {
 					log.Printf("enqueue loop event failed: %v", err)
 				}
 			}
 			if publisher != nil && publisher.Connected() {
+				heartbeat := map[string]any{
+					"device_id": config.LaneID,
+					"state":     "ONLINE",
+					"timestamp": time.Now().UTC().Format(time.RFC3339Nano),
+				}
+				body, _ := json.Marshal(heartbeat)
+				_ = publisher.Publish(mqttsync.TelemetryTopic(config.TenantID, config.SiteID, config.LaneID), 1, false, body)
 				if err := engine.SyncOutbox(ctx); err != nil {
 					log.Printf("sync outbox failed: %v", err)
 				}

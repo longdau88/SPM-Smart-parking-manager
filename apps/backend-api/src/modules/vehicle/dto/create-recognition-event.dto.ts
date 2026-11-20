@@ -2,6 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 
 export class CreateRecognitionEventDto {
+  @ApiProperty({ required: false })
+  @IsUUID()
+  @IsOptional()
+  edge_event_id?: string;
   @ApiProperty()
   @IsUUID()
   site_id: string;

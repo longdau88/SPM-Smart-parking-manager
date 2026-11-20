@@ -283,3 +283,27 @@ Biến môi trường Edge Agent:
 - `EDGE_DB_PATH`, `EDGE_TENANT_ID`, `EDGE_SITE_ID`, `EDGE_LANE_ID`.
 - `MODBUS_ADDRESS`: mặc định `127.0.0.1:502`.
 - `MQTT_BROKER`, `MQTT_CLIENT_ID`, `MQTT_USERNAME`, `MQTT_PASSWORD`.
+
+### MQTT Cloud Ingestion
+
+Backend có thể lắng nghe trực tiếp MQTT bằng `MQTT_BROKER`:
+
+```text
+spm/{tenant_id}/{site_id}/lane/{lane_id}/event/detected
+spm/{tenant_id}/{site_id}/device/{device_id}/telemetry
+```
+
+Mọi payload đều phải có `edge_event_id` dạng UUID. Backend lưu receipt unique để phát lại
+MQTT không tạo trùng Recognition Event hoặc Parking Session. Có thể kiểm tra qua REST:
+
+```text
+POST /api/v1/operations/edge/events
+GET  /api/v1/operations/edge/receipts
+GET  /api/v1/operations/edge/heartbeats
+```
+
+Biến môi trường bổ sung:
+
+- `MQTT_BROKER`: ví dụ `mqtt://mosquitto:1883`.
+- `MQTT_USERNAME`, `MQTT_PASSWORD`.
+- `MQTT_INGESTION_CLIENT_ID`.

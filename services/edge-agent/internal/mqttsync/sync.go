@@ -71,6 +71,10 @@ func BarrierCommandTopic(tenantID, siteID, laneID string) string {
 	return fmt.Sprintf("spm/%s/%s/lane/%s/command/barrier", tenantID, siteID, laneID)
 }
 
+func TelemetryTopic(tenantID, siteID, deviceID string) string {
+	return fmt.Sprintf("spm/%s/%s/device/%s/telemetry", tenantID, siteID, deviceID)
+}
+
 func PublishOutbox(ctx context.Context, publisher Publisher, topic string, payload map[string]any) error {
 	select {
 	case <-ctx.Done():

@@ -8,11 +8,18 @@ import { AuditLogEntity } from './entities/audit-log.entity';
 import { BarrierService } from './barrier.service';
 import { OperationsController } from './operations.controller';
 import { RealtimeGateway } from './realtime.gateway';
+import { EdgeIngestionService } from './edge-ingestion.service';
+import { EdgeEventReceiptEntity } from './entities/edge-event-receipt.entity';
+import { EdgeDeviceHeartbeatEntity } from './entities/edge-device-heartbeat.entity';
+import { VehicleModule } from '../vehicle/vehicle.module';
+import { SessionModule } from '../session/session.module';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ParkingLaneEntity, ParkingSiteEntity, AuditLogEntity]),
+    VehicleModule,
+    SessionModule,
+    TypeOrmModule.forFeature([ParkingLaneEntity, ParkingSiteEntity, AuditLogEntity, EdgeEventReceiptEntity, EdgeDeviceHeartbeatEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -22,7 +29,7 @@ import { RealtimeGateway } from './realtime.gateway';
     }),
   ],
   controllers: [OperationsController],
-  providers: [BarrierService, RealtimeGateway],
-  exports: [BarrierService, RealtimeGateway],
+  providers: [BarrierService, RealtimeGateway, EdgeIngestionService],
+  exports: [BarrierService, RealtimeGateway, EdgeIngestionService],
 })
 export class OperationsModule {}

@@ -19,6 +19,8 @@ import { PricingRuleEntity } from '../../modules/billing/entities/pricing-rule.e
 import { InvoiceEntity } from '../../modules/billing/entities/invoice.entity';
 import { PaymentTransactionEntity } from '../../modules/billing/entities/payment-transaction.entity';
 import { AuditLogEntity } from '../../modules/operations/entities/audit-log.entity';
+import { EdgeEventReceiptEntity } from '../../modules/operations/entities/edge-event-receipt.entity';
+import { EdgeDeviceHeartbeatEntity } from '../../modules/operations/entities/edge-device-heartbeat.entity';
 
 @Global()
 @Module({
@@ -52,6 +54,8 @@ import { AuditLogEntity } from '../../modules/operations/entities/audit-log.enti
           InvoiceEntity,
           PaymentTransactionEntity,
           AuditLogEntity,
+          EdgeEventReceiptEntity,
+          EdgeDeviceHeartbeatEntity,
         ],
         synchronize: config.get<string>('DB_SYNCHRONIZE') === 'true',
         migrationsRun: config.get<string>('DB_MIGRATIONS_RUN') === 'true',

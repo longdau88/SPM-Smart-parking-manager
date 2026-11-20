@@ -15,6 +15,9 @@ export class RecognitionEventEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'uuid', nullable: true, unique: true })
+  edge_event_id: string | null;
+
   @Column({ type: 'uuid' })
   tenant_id: string;
 

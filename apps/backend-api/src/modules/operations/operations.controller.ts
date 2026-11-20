@@ -7,13 +7,39 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { BarrierControlDto } from './dto/barrier-control.dto';
 import { BarrierService } from './barrier.service';
+import { EdgeIngestionDto } from './dto/edge-ingestion.dto';
+import { EdgeIngestionService } from './edge-ingestion.service';
 
 @ApiTags('Barrier & Audit')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('operations')
 export class OperationsController {
-  constructor(private readonly barrierService: BarrierService) {}
+  constructor(
+    private readonly barrierService: BarrierService,
+    private readonly edgeIngestion: EdgeIngestionService,
+  ) {}
+
+  @Post('edge/events')
+  @Roles('SUPER_ADMIN', 'ORG_ADMIN', 'MANAGER', 'STAFF')
+  async ingestEdgeEvent(@Body() dto: EdgeIngestionDto, @CurrentTenant() tenantId?: string) {
+    if (!tenantId) throw new BadRequestException('Thiếu tenant context');
+    return { message: 'Đã tiếp nhận sự kiện Edge', data: await this.edgeIngestion.ingest({ ...dto, tenant_id: tenantId, payload: dto.payload ?? {} }) };
+  }
+
+  @Get('edge/receipts')
+  @Roles('SUPER_ADMIN', 'ORG_ADMIN', 'MANAGER')
+  async edgeReceipts(@CurrentTenant() tenantId?: string, @Query('limit', new ParseIntPipe({ optional: true })) limit = 50) {
+    if (!tenantId) throw new BadRequestException('Thiếu tenant context');
+    return { message: 'Lấy edge event receipts thành công', data: await this.edgeIngestion.findReceipts(tenantId, limit) };
+  }
+
+  @Get('edge/heartbeats')
+  @Roles('SUPER_ADMIN', 'ORG_ADMIN', 'MANAGER')
+  async edgeHeartbeats(@CurrentTenant() tenantId?: string) {
+    if (!tenantId) throw new BadRequestException('Thiếu tenant context');
+    return { message: 'Lấy trạng thái Edge thành công', data: await this.edgeIngestion.findHeartbeats(tenantId) };
+  }
 
   @Post('barriers/:laneId/control')
   @Roles('SUPER_ADMIN', 'ORG_ADMIN', 'MANAGER', 'STAFF')
