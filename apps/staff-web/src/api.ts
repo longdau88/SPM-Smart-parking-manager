@@ -1,3 +1,5 @@
+import { getCabinConfig } from './config';
+
 export type LaneDirection = 'IN' | 'OUT';
 export type SessionStatus = 'ACTIVE' | 'PENDING_PAYMENT' | 'COMPLETED';
 
@@ -29,20 +31,17 @@ export interface SessionResult {
   payment_status?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
-
 function authHeaders() {
   const token = localStorage.getItem('spm_token');
-  const tenant = import.meta.env.VITE_TENANT_ID ?? localStorage.getItem('spm_tenant_id');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(tenant ? { 'X-Tenant-Id': tenant } : {}),
-  };
+  const tenant = getCabinConfig().tenantId || localStorage.getItem('spm_tenant_id');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (tenant) headers['X-Tenant-Id'] = tenant;
+  return headers;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${getCabinConfig().apiUrl}${path}`, {
     ...init,
     headers: { ...authHeaders(), ...init?.headers },
   });
@@ -67,8 +66,8 @@ export async function createEntry(input: {
     body: JSON.stringify({
       ...input,
       display_plate: input.clean_plate.toUpperCase(),
-      entry_image_url: 'https://storage.spm.io/demo/entry.jpg',
-      entry_plate_crop_url: 'https://storage.spm.io/demo/plate.jpg',
+      entry_image_url: 'edge://offline/entry.jpg',
+      entry_plate_crop_url: 'edge://offline/plate.jpg',
     }),
   });
 }
@@ -83,8 +82,8 @@ export async function checkExit(input: {
     body: JSON.stringify({
       ...input,
       display_plate: input.clean_plate.toUpperCase(),
-      exit_image_url: 'https://storage.spm.io/demo/exit.jpg',
-      exit_plate_crop_url: 'https://storage.spm.io/demo/plate-exit.jpg',
+      exit_image_url: 'edge://offline/exit.jpg',
+      exit_plate_crop_url: 'edge://offline/plate-exit.jpg',
     }),
   });
 }

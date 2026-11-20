@@ -170,6 +170,18 @@ Không dùng `X-Tenant-Id` cho webhook; tenant được lấy từ invoice sau k
 - Phím tắt `F1` xử lý xe vào, `SPACE` xử lý xe ra, `F4` xác nhận tiền mặt.
 - Khi Staff Cabin có JWT hợp lệ, Socket.IO namespace `/cabin` nhận event realtime `cabin.event`.
 - Polling fallback còn chạy mỗi 30 giây để bảo đảm đồng bộ nếu mất WebSocket.
+- Staff Cabin là PWA: có thể Cài đặt trên Windows, Android hoặc iOS.
+- Khi mất mạng, Entry/Exit/Cash được lưu trong IndexedDB outbox và đồng bộ tự động khi mạng hồi phục.
+- Bảng Cấu hình Cabin cho phép thay API, WebSocket, tenant, site và lane mà không cần build lại.
+
+#### Cài đặt PWA trên PC/mobile
+
+1. Mở `https://staff-domain.vercel.app` bằng Chrome/Edge trên máy tính hoặc điện thoại.
+2. Chọn biểu tượng **Cài đặt/Cài đặt ứng dụng** trên trình duyệt.
+3. Mở Staff Cabin từ Start menu, desktop hoặc màn hình chính như ứng dụng native.
+4. Mở nút cấu hình bánh răng để nhập tenant, site, lane và địa chỉ API/WebSocket.
+5. Khi mất mạng, ứng dụng mở từ cache và lưu Entry/Exit/Cash vào IndexedDB outbox.
+6. Khi mạng phục hồi, ứng dụng đồng bộ outbox tự động mỗi 15 giây.
 
 Chạy bằng:
 
