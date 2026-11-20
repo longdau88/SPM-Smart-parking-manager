@@ -92,7 +92,169 @@ SmartParking/
    ```bash
    pnpm install
    ```
-3. Chạy build kiểm tra toàn bộ packages:
+3. (Tuỳ chọn) cấu hình endpoint backend cho Admin Web:
+   ```bash
+   # apps/admin-web/.env.local
+   NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+   ```
+   Nếu API chưa sẵn sàng, màn hình Digital Twin sẽ hiển thị dữ liệu demo và gắn nhãn `DEMO DATA`.
+4. Chạy build kiểm tra toàn bộ packages:
    ```bash
    pnpm build
    ```
+
+### Backend foundation cho Sprint 03
+
+Backend hiện đã có nền tảng `Vehicle` và `Recognition Events` để nhận kết quả từ AI/Edge:
+
+- `POST /api/v1/vehicles`: đăng ký phương tiện theo tenant.
+- `GET /api/v1/vehicles?q=51H98765`: tìm kiếm phương tiện theo biển số.
+- `POST /api/v1/recognition-events`: ghi nhận kết quả nhận diện vào/ra.
+- `GET /api/v1/recognition-events/sites/:siteId/recent`: xem sự kiện nhận diện gần nhất.
+- `POST /api/v1/parking-sessions/entry`: tạo phiên khi xe vào.
+- `POST /api/v1/parking-sessions/exit-check`: khớp phiên khi xe ra.
+- `GET /api/v1/parking-sessions/sites/:siteId/active`: danh sách phiên đang hoạt động.
+- `POST /api/v1/pricing-rules`: tạo quy tắc tính phí.
+- `GET /api/v1/pricing-rules/sites/:siteId`: danh sách quy tắc theo bãi.
+- `POST /api/v1/pricing-rules/calculate`: tính phí thử theo quy tắc hiện hành.
+- `POST /api/v1/payments/sessions/:sessionId/invoice`: tạo hóa đơn/VietQR.
+- `POST /api/v1/payments/cash-confirm`: xác nhận thu tiền mặt.
+- `POST /api/v1/payments/vietqr/webhook`: webhook VietQR có HMAC-SHA256.
+
+Migration `CreateVehicleRecognitionTables1732000000000` tạo bảng `vehicles` và
+`recognition_logs`. Khi chuyển sang môi trường production, chạy migration thay vì
+dựa vào TypeORM `synchronize`.
+
+### Parking Sessions core
+
+Luồng phiên hiện tại:
+
+```text
+Recognition IN → parking session ACTIVE
+Recognition OUT → khớp phiên ACTIVE → PENDING_PAYMENT
+```
+
+Pricing Rules đã được nối vào `exit-check`. Payment vẫn chưa được triển khai;
+phiên xe ra chuyển sang `PENDING_PAYMENT` với `payment_status = UNPAID` cho tới
+khi payment engine xác nhận giao dịch.
+
+Các tariff model hỗ trợ:
+
+- `FLAT`: `{ "amount": 50000 }`
+- `TIME_BLOCK`: `{ "block_minutes": 60, "block_rate": 20000 }`
+- `HOURLY_PROGRESSIVE`: `{ "first_hour_rate": 20000, "additional_hour_rate": 15000 }`
+- `OVERNIGHT`: `{ "overnight_fee": 100000, "hourly_rate": 20000 }`
+
+Mọi quy tắc đều hỗ trợ `grace_period_minutes`, mặc định 15 phút.
+
+### Payment Engine
+
+Payment Engine hoàn tất vòng đời thanh toán:
+
+```text
+PENDING_PAYMENT → Invoice/VietQR → PAID → COMPLETED → OPEN_EXIT_BARRIER
+```
+
+Webhook ngân hàng là public endpoint nhưng bắt buộc chữ ký
+`X-Signature = HMAC-SHA256(raw JSON body, VIETQR_WEBHOOK_SECRET)`.
+Không dùng `X-Tenant-Id` cho webhook; tenant được lấy từ invoice sau khi signature
+được xác minh.
+
+### Staff Cabin Web
+
+`@spm/staff-web` hiện cung cấp màn hình cabin split-view:
+
+- Làn vào/làn ra và trạng thái phần cứng.
+- Gọi Parking Sessions, Invoice và Cash Confirmation API.
+- Khi backend khả dụng, Socket.IO realtime là kênh chính; polling fallback mỗi 30 giây thay cho polling 5 giây liên tục.
+- Phím tắt `F1` xử lý xe vào, `SPACE` xử lý xe ra, `F4` xác nhận tiền mặt.
+- Khi Staff Cabin có JWT hợp lệ, Socket.IO namespace `/cabin` nhận event realtime `cabin.event`.
+- Polling fallback còn chạy mỗi 30 giây để bảo đảm đồng bộ nếu mất WebSocket.
+
+Chạy bằng:
+
+```bash
+pnpm --filter @spm/staff-web build
+pnpm --filter @spm/staff-web dev
+```
+
+Biến môi trường frontend:
+
+- `VITE_API_URL`: mặc định `http://localhost:8000/api/v1`.
+- `VITE_SITE_ID`, `VITE_ENTRY_LANE_ID`, `VITE_EXIT_LANE_ID`.
+- `VITE_TENANT_ID`: tenant context khi không lấy từ local storage.
+- `VITE_WS_URL`: mặc định `http://localhost:8000`.
+
+### Barrier Control và Audit
+
+```text
+POST /api/v1/operations/barriers/:laneId/control
+GET  /api/v1/operations/audit-logs
+```
+
+Barrier control yêu cầu JWT và tenant context; body tối thiểu:
+
+```json
+{
+  "site_id": "uuid",
+  "action": "OPEN",
+  "reason": "Xe đã thanh toán",
+  "operator_note": "Staff cabin"
+}
+```
+
+Mọi lệnh barrier được ghi vào bảng `audit_logs` và phát realtime event `BARRIER_CONTROL`
+qua namespace `/cabin`. WebSocket xác thực JWT và chỉ cho phép socket tham gia tenant/site
+được xác thực.
+
+### ANPR service skeleton
+
+Service `@spm/ai-anpr` cung cấp pipeline:
+
+```text
+image_url -> ANPR engine adapter -> normalize plate -> POST recognition event -> parking session
+```
+
+Chạy service ở chế độ mock để kiểm thử luồng tích hợp:
+
+```bash
+pnpm --filter @spm/ai-anpr build
+pnpm --filter @spm/ai-anpr test
+pnpm --filter @spm/ai-anpr start
+```
+
+Endpoint:
+
+```text
+GET  http://localhost:8100/health
+POST http://localhost:8100/v1/anpr/recognize
+```
+
+Request mock tối thiểu cần `site_id`, `lane_id`, `direction` (`IN`/`OUT`) và
+`image_url` dạng `https://.../frame.jpg?plate=51H-987.65`. Service chỉ sử dụng
+query `plate` trong mock engine; adapter model thật sẽ thay thế `MockAnprEngine`
+khi pipeline YOLO/OCR được tích hợp.
+
+Biến môi trường:
+
+- `BACKEND_API_URL`: mặc định `http://localhost:8000/api/v1`.
+- `BACKEND_API_TOKEN`: access token gọi backend.
+- `BACKEND_TENANT_ID`: tenant bắt buộc khi ghi recognition event.
+- `ANPR_ENGINE`: mặc định `mock`; giá trị khác sẽ báo lỗi cho tới khi adapter model thật được thêm.
+
+### Database migration production
+
+Backend production luôn dùng `synchronize: false`. Chạy migration bằng TypeORM:
+
+```bash
+pnpm --filter @spm/backend-api migration:show
+pnpm --filter @spm/backend-api migration:run
+pnpm --filter @spm/backend-api migration:revert
+```
+
+Biến môi trường database:
+
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SCHEMA`.
+- `DB_SYNCHRONIZE=true` chỉ được dùng trong môi trường development nội bộ.
+- `DB_MIGRATIONS_RUN=true` để tự chạy migration khi bootstrap ứng dụng.
+- `DB_LOGGING=true` để bật SQL logging.
