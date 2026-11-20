@@ -258,3 +258,28 @@ Biến môi trường database:
 - `DB_SYNCHRONIZE=true` chỉ được dùng trong môi trường development nội bộ.
 - `DB_MIGRATIONS_RUN=true` để tự chạy migration khi bootstrap ứng dụng.
 - `DB_LOGGING=true` để bật SQL logging.
+
+### Edge Agent Go
+
+Thư mục `services/edge-agent` chứa daemon offline-first bằng Go:
+
+- SQLite local outbox với idempotent `edge_event_id`.
+- Modbus TCP barrier/loop register map.
+- Khóa cứng Loop 2 trước mọi lệnh hạ cần.
+- MQTT QoS 1 cho event detected và nhận lệnh barrier.
+- Exponential backoff retry: 2, 5, 15, 30, 60 giây.
+
+Chạy và kiểm thử:
+
+```bash
+cd services/edge-agent
+go mod tidy
+go test ./...
+go run ./cmd/edge-agent
+```
+
+Biến môi trường Edge Agent:
+
+- `EDGE_DB_PATH`, `EDGE_TENANT_ID`, `EDGE_SITE_ID`, `EDGE_LANE_ID`.
+- `MODBUS_ADDRESS`: mặc định `127.0.0.1:502`.
+- `MQTT_BROKER`, `MQTT_CLIENT_ID`, `MQTT_USERNAME`, `MQTT_PASSWORD`.

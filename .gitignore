@@ -39,6 +39,7 @@ lerna-debug.log*
 *.apk
 *.aab
 build/
+services/edge-agent/*.exe
 ios/Pods/
 ios/.symlinks/
 android/.gradle/
