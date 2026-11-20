@@ -25,7 +25,7 @@ export default new DataSource({
   host: process.env.DB_HOST ?? 'localhost',
   port: Number(process.env.DB_PORT ?? 5432),
   username: process.env.DB_USER ?? 'spm_admin',
-  password: process.env.DB_PASSWORD ?? 'REDACTED_DB_PASSWORD',
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME ?? 'spm_enterprise',
   schema: process.env.DB_SCHEMA ?? 'public',
   entities: [

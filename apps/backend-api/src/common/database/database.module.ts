@@ -33,7 +33,7 @@ import { EdgeDeviceHeartbeatEntity } from '../../modules/operations/entities/edg
         host: config.get<string>('DB_HOST', 'localhost'),
         port: config.get<number>('DB_PORT', 5432),
         username: config.get<string>('DB_USER', 'spm_admin'),
-        password: config.get<string>('DB_PASSWORD', 'REDACTED_DB_PASSWORD'),
+        password: config.getOrThrow<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME', 'spm_enterprise'),
         schema: config.get<string>('DB_SCHEMA', 'public'),
         entities: [

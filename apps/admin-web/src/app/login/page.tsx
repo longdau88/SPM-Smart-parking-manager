@@ -6,8 +6,8 @@ import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('admin@spm.io');
-  const [password, setPassword] = useState('REDACTED_INITIAL_ADMIN_PASSWORD');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -17,8 +17,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // In production, connect to backend API: http://localhost:8000/api/v1/auth/login
-      const res = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
+      const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -30,22 +30,10 @@ export default function LoginPage() {
         localStorage.setItem('spm_user', JSON.stringify(data.data.user));
         router.push('/dashboard');
       } else {
-        // Fallback for demo if local DB is not yet running
-        if (username === 'admin@spm.io' && password === 'REDACTED_INITIAL_ADMIN_PASSWORD') {
-          localStorage.setItem('spm_token', 'demo-token');
-          router.push('/dashboard');
-        } else {
-          setError(data.message || 'Thông tin đăng nhập không hợp lệ');
-        }
+        setError(data.message || 'Thông tin đăng nhập không hợp lệ');
       }
     } catch {
-      // Fallback for standalone dev
-      if (username === 'admin@spm.io' && password === 'REDACTED_INITIAL_ADMIN_PASSWORD') {
-        localStorage.setItem('spm_token', 'demo-token');
-        router.push('/dashboard');
-      } else {
-        setError('Không thể kết nối đến máy chủ xác thực');
-      }
+      setError('Không thể kết nối đến máy chủ xác thực');
     } finally {
       setLoading(false);
     }

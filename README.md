@@ -307,3 +307,28 @@ Biến môi trường bổ sung:
 - `MQTT_BROKER`: ví dụ `mqtt://mosquitto:1883`.
 - `MQTT_USERNAME`, `MQTT_PASSWORD`.
 - `MQTT_INGESTION_CLIENT_ID`.
+
+## Public Repository Security
+
+- Không commit `.env`, private key, password, JWT secret hoặc webhook signature.
+- Tạo secret ngẫu nhiên bằng một secrets manager hoặc lệnh tạo 32-byte random:
+
+```bash
+openssl rand -hex 32
+```
+
+- Development Docker:
+
+```bash
+cp infrastructure/docker/.env.example infrastructure/docker/.env
+mosquitto_passwd -c infrastructure/docker/mosquitto/passwd spm-edge
+docker compose --env-file infrastructure/docker/.env -f infrastructure/docker/docker-compose.yml up -d
+```
+
+- Production phải đặt `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `DB_PASSWORD`,
+  `MQTT_USERNAME`, `MQTT_PASSWORD`, `VIETQR_WEBHOOK_SECRET` và tất cả credential
+  Docker qua secret manager. Không dùng giá trị từ `.env.example`.
+- Bắt buộc cấu hình `CORS_ORIGIN` với danh sách origin chính xác; không dùng `*`
+  cho deployment production.
+- Các secret mặc định đã từng xuất hiện trong repository phải được rotate ngay,
+  kể cả khi đã xóa khỏi working tree; lịch sử Git cũ vẫn cần được rewrite.

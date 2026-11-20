@@ -7,7 +7,7 @@ export class LoginDto {
   @IsString()
   username: string;
 
-  @ApiProperty({ example: 'REDACTED_INITIAL_ADMIN_PASSWORD', description: 'Mật khẩu tài khoản' })
+  @ApiProperty({ example: '********', description: 'Mật khẩu tài khoản' })
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   @MinLength(6, { message: 'Mật khẩu phải có tối thiểu 6 ký tự' })
   @IsString()

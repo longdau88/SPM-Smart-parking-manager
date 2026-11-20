@@ -59,11 +59,15 @@ export async function runInitialSeed(dataSource: DataSource) {
   }
 
   // 3. Super Admin User
-  const adminEmail = 'admin@spm.io';
+  const adminEmail = process.env.INITIAL_SUPER_ADMIN_EMAIL;
+  const adminPassword = process.env.INITIAL_SUPER_ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    console.log('ℹ️ Seed Super Admin bị bỏ qua: cấu hình INITIAL_SUPER_ADMIN_EMAIL/PASSWORD');
+  } else {
   let superAdmin = await userRepo.findOne({ where: { email: adminEmail } });
   if (!superAdmin) {
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('REDACTED_INITIAL_ADMIN_PASSWORD', salt);
+    const passwordHash = await bcrypt.hash(adminPassword, salt);
 
     superAdmin = userRepo.create({
       email: adminEmail,
@@ -82,7 +86,8 @@ export async function runInitialSeed(dataSource: DataSource) {
     });
     await userRoleRepo.save(userRole);
 
-    console.log(`✅ Đã khởi tạo Super Admin mặc định: ${adminEmail} (Mật khẩu: REDACTED_INITIAL_ADMIN_PASSWORD)`);
+    console.log(`✅ Đã khởi tạo Super Admin một lần: ${adminEmail}`);
+  }
   }
 
   console.log('🎉 Hoàn thành khởi tạo dữ liệu mẫu thành công!');

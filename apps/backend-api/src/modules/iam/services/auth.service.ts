@@ -23,6 +23,12 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
+  private refreshSecret() {
+    const secret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!secret) throw new UnauthorizedException('JWT_REFRESH_SECRET is required');
+    return secret;
+  }
+
   async login(dto: LoginDto, clientIp?: string) {
     const { username, password } = dto;
 
@@ -79,7 +85,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(
       { sub: user.id },
       {
-        secret: this.configService.get('JWT_REFRESH_SECRET') || 'REDACTED_JWT_REFRESH_SECRET',
+        secret: this.refreshSecret(),
         expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d',
       },
     );
@@ -140,7 +146,7 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const decoded = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get('JWT_REFRESH_SECRET') || 'REDACTED_JWT_REFRESH_SECRET',
+        secret: this.refreshSecret(),
       });
 
       const user = await this.userRepository.findOne({

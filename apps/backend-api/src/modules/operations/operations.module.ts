@@ -23,9 +23,11 @@ import { SessionModule } from '../session/session.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_ACCESS_SECRET') || 'REDACTED_JWT_ACCESS_SECRET',
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_ACCESS_SECRET');
+        if (!secret) throw new Error('JWT_ACCESS_SECRET is required');
+        return { secret };
+      },
     }),
   ],
   controllers: [OperationsController],
